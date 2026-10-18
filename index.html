@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="刷哪張">
+<title>刷哪張</title>
+<style>
+:root {
+  --bg: #f6f5f2; --surface: #ffffff; --surface-2: #efede8; --text: #1d1c1a; --muted: #6b6862;
+  --border: #dedbd4; --accent: #1f6f5c; --accent-soft: #d9ece6; --warn: #a3520f; --warn-soft: #fbead8;
+  --danger: #b3261e; --bar: #1f6f5c; --bar-bg: #e4e1da;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161615; --surface: #1f1f1d; --surface-2: #2a2a27; --text: #ecebe7; --muted: #a09d96;
+    --border: #383733; --accent: #5fc0a5; --accent-soft: #1d3a32; --warn: #f0a35e; --warn-soft: #3d2a17;
+    --danger: #f2867e; --bar: #5fc0a5; --bar-bg: #34332f;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161615; --surface: #1f1f1d; --surface-2: #2a2a27; --text: #ecebe7; --muted: #a09d96;
+  --border: #383733; --accent: #5fc0a5; --accent-soft: #1d3a32; --warn: #f0a35e; --warn-soft: #3d2a17;
+  --danger: #f2867e; --bar: #5fc0a5; --bar-bg: #34332f;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif; }
+main { max-width: 560px; margin: 0 auto; padding: 16px 16px 96px; }
+h1 { font-size: 20px; margin: 4px 0 12px; }
+h2 { font-size: 16px; margin: 20px 0 8px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 10px; }
+label.f { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+input, select, textarea { width: 100%; font: inherit; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 8px; padding: 9px 10px; }
+textarea { font: 12px/1.4 ui-monospace, Consolas, monospace; min-height: 280px; }
+textarea.sm { font: inherit; font-size: 14px; min-height: 64px; }
+.row { display: flex; gap: 8px; } .row > * { flex: 1; min-width: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 999px;
+  padding: 5px 11px; font: inherit; font-size: 13px; cursor: pointer; }
+.chip.on { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.check { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-top: 10px; }
+.check input { width: auto; }
+button.btn { font: inherit; border: 1px solid var(--accent); background: var(--accent); color: var(--surface);
+  border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+button.btn.ghost { background: transparent; color: var(--accent); }
+button.btn.danger { border-color: var(--danger); background: transparent; color: var(--danger); }
+button.btn.sm { padding: 4px 10px; font-size: 13px; }
+.res { display: flex; gap: 12px; align-items: flex-start; }
+.res .main { flex: 1; min-width: 0; }
+.res .amt { text-align: right; white-space: nowrap; }
+.res .amt b { font-size: 20px; }
+.res.best { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.res.dim { opacity: .72; }
+.name { font-weight: 600; }
+.muted { color: var(--muted); font-size: 13px; }
+.tag { display: inline-block; font-size: 12px; padding: 1px 7px; border-radius: 999px; background: var(--surface-2); color: var(--muted); margin-right: 4px; }
+.tag.acc { background: var(--accent-soft); color: var(--accent); }
+.tag.warn { background: var(--warn-soft); color: var(--warn); }
+.note { font-size: 13px; color: var(--warn); margin-top: 4px; }
+.parts { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.banner { background: var(--warn-soft); color: var(--text); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; font-size: 14px; }
+.banner .btns { display: flex; gap: 8px; margin-top: 8px; }
+.rule { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px 12px; margin-bottom: 10px; background: var(--bg); }
+.plan { border-left: 3px solid var(--accent); }
+.actions { position: sticky; bottom: 64px; display: flex; gap: 8px; padding: 10px 0; background: var(--bg); }
+details summary { cursor: pointer; color: var(--muted); font-size: 14px; }
+.bar { height: 6px; background: var(--bar-bg); border-radius: 3px; overflow: hidden; margin: 4px 0 2px; }
+.bar > i { display: block; height: 100%; background: var(--bar); }
+.tx { display: flex; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+.tx:last-child { border-bottom: 0; }
+.x { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 16px; padding: 0 4px; }
+nav { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--border);
+  display: flex; padding-bottom: env(safe-area-inset-bottom); }
+nav button { flex: 1; background: none; border: 0; font: inherit; font-size: 13px; color: var(--muted); padding: 10px 0 12px; cursor: pointer; }
+nav button.on { color: var(--accent); font-weight: 600; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+td, th { padding: 6px 4px; border-bottom: 1px solid var(--border); text-align: left; }
+td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; }
+.toast { position: fixed; left: 50%; bottom: 80px; transform: translateX(-50%); background: var(--text); color: var(--bg);
+  padding: 8px 16px; border-radius: 999px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 10; }
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav id="nav">
+  <button data-tab="calc" class="on">刷哪張</button>
+  <button data-tab="log">本期額度</button>
+  <button data-tab="analysis">分析</button>
+  <button data-tab="settings">設定</button>
+</nav>
+<div class="toast" id="toast"></div>
+
+<script src="cards.js"></script>
+<script>
+// 權益資料在 cards.js（卡片庫）；這個檔案只有 App 邏輯。
+const LIB = window.CARD_LIBRARY || { updated: '', cards: [] };
+const libCard = id => LIB.cards.find(c => c.id === id);
+
+const CATEGORIES = [
+  ['dining','餐飲'],['delivery','外送'],['online','網購'],['cvs','超商'],['dept','百貨/Outlet'],
+  ['grocery','量販超市'],['transport','交通'],['fuel','加油充電'],['drug','藥妝藥局'],['home','居家/服飾'],
+  ['travel','航空/訂房/旅行社'],['ent','訂閱/娛樂'],['insurance','保費'],['general','其他']
+];
+const REGIONS = [['tw','國內'],['jp','日本'],['kr','韓國'],['th','泰國'],['os','其他海外']];
+const PAYS = [['card','實體卡/線上刷卡'],['tspay','台新Pay'],['linepay','LINE Pay'],['nfc','Apple/Google Pay'],['icash','全盈+Pay']];
+const STATUSES = [['own','持有'],['candidate','考慮中'],['off','停用']];
+
+// ===================== 狀態 =====================
+const KEY = 'cardswitch.v1';
+const clone = o => JSON.parse(JSON.stringify(o));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+let S;
+function load() {
+  try { S = JSON.parse(localStorage.getItem(KEY)); } catch (e) { S = null; }
+  if (!S || !Array.isArray(S.cards)) S = { cards: [], tx: [], showCandidates: true, onboarded: false };
+  migrate();
+}
+function migrate() {
+  S.tx = S.tx || [];
+  // 舊版資料遷移
+  for (const c of S.cards) {
+    if (c.alwaysRules) { c.rules = [...c.alwaysRules, ...(c.rules || [])]; delete c.alwaysRules; }
+    if (c.libId === undefined) { c.libId = libCard(c.id) ? c.id : null; c.libUpdated = S.dataVersion || ''; }
+  }
+  if (S.cards.length) S.onboarded = true;
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { toast('無法儲存（瀏覽器儲存空間被封鎖）'); } }
+
+function fromLib(lc, status = 'own', statementDay = 0) {
+  return Object.assign(clone(lc), { status, statementDay, currentPlan: lc.defaultPlan || lc.plans?.[0]?.id,
+    libId: lc.id, libUpdated: lc.updated || '', custom: false });
+}
+
+// ===================== 工具 =====================
+const pad = n => String(n).padStart(2, '0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const today = () => ymd(new Date());
+const parseD = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (s, n) => { const d = parseD(s); d.setDate(d.getDate() + n); return ymd(d); };
+const money = n => 'NT$' + (Math.round(n * 10) / 10).toLocaleString('zh-TW', { maximumFractionDigits: 1 });
+const pct = r => (Math.round(r * 1000) / 10) + '%';
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const norm = s => String(s || '').toLowerCase().replace(/[\s\-_・·]/g, '');
+const catName = id => (CATEGORIES.find(c => c[0] === id) || [, id])[1];
+const regName = id => (REGIONS.find(c => c[0] === id) || [, id])[1];
+const isWeekend = s => { const w = parseD(s).getDay(); return w === 0 || w === 6; };
+const options = (list, sel) => list.map(([v, n]) => `<option value="${v}" ${sel === v ? 'selected' : ''}>${n}</option>`).join('');
+function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('show'), 1800); }
+// 刪除類按鈕：第一次點變成「確定？」，第二次才執行
+function confirmTap(el, label = '確定？') { if (el.dataset.confirm === '1') return true; el.dataset.confirm = '1'; el.textContent = label; return false; }
+
+// 帳單週期 / 月 / 季 的區間 [start, end]
+function periodOf(kind, statementDay, dateStr) {
+  const d = parseD(dateStr), y = d.getFullYear(), m = d.getMonth();
+  if (kind === 'quarter') { const q = Math.floor(m / 3) * 3; return [ymd(new Date(y, q, 1)), ymd(new Date(y, q + 3, 0))]; }
+  const sd = Number(statementDay) || 0;
+  if (kind === 'month' || !sd) return [ymd(new Date(y, m, 1)), ymd(new Date(y, m + 1, 0))];
+  const lastDay = (yy, mm) => new Date(yy, mm + 1, 0).getDate();
+  const clampD = (yy, mm) => Math.min(sd, lastDay(yy, mm));
+  // 結帳日當天屬於本期最後一天
+  const sy = y, sm = d.getDate() > clampD(y, m) ? m : m - 1;
+  const start = new Date(sy, sm, clampD(sy, sm) + 1);
+  const end = new Date(sy, sm + 1, clampD(sy, sm + 1));
+  return [ymd(start), ymd(end)];
+}
+
+// ===================== 通路比對與計算 =====================
+function rulesOf(card) {
+  const out = [...(card.rules || [])];
+  for (const p of (card.plans || [])) out.push(...p.rules);
+  return out;
+}
+function allMerchantNames() {
+  const set = new Map();
+  for (const c of S.cards) for (const r of rulesOf(c)) for (const m of (r.merchants || [])) set.set(norm(m), m);
+  return set;
+}
+// 回傳輸入命中的「正規化店名」集合；"Uber Eats" 會命中 Uber Eats 而不會同時命中 Uber
+function resolveMerchant(q) {
+  const n = norm(q); if (!n) return [];
+  const names = [...allMerchantNames().keys()];
+  let hit = names.filter(m => n.includes(m));
+  hit = hit.filter(m => !hit.some(o => o !== m && o.includes(m)));
+  if (!hit.length && n.length >= 2) hit = names.filter(m => m.includes(n));
+  return hit;
+}
+
+function ruleMatches(rule, p) {
+  if (rule.validUntil && p.date > rule.validUntil) return false;
+  if (rule.regions && !rule.regions.includes(p.region)) return false;
+  if (rule.pay && !rule.pay.includes(p.pay)) return false;
+  if (rule.holiday && !p.holiday) return false;
+  if (rule.minSingle && p.amount < rule.minSingle) return false;
+  if (!rule.merchants && !rule.categories) return true;
+  if (rule.categories && rule.categories.includes(p.category)) return true;
+  if (rule.merchants && rule.merchants.some(m => p.matched.includes(norm(m)))) return true;
+  return false;
+}
+
+// usedFn(card, rule, date) -> 本期該規則已用掉的回饋
+function usedFromTx(list) {
+  return (card, rule, date) => {
+    const [a, b] = periodOf(rule.capPeriod || 'cycle', card.statementDay, date);
+    let s = 0;
+    for (const t of list) if (t.cardId === card.id && t.date >= a && t.date <= b)
+      for (const part of (t.breakdown || [])) if (part.ruleId === rule.id) s += part.reward;
+    return s;
+  };
+}
+
+function evalPlan(card, plan, p, usedFn) {
+  const b = card.base || {};
+  const base = (p.region === 'tw' ? b.tw : (b[p.region] ?? b.overseas ?? b.tw)) || 0;
+  const rules = [...(card.rules || []), ...(plan ? plan.rules : [])].filter(r => ruleMatches(r, p));
+  const best = {};
+  for (const r of rules) { const g = r.group || 'main'; if (!best[g] || r.rate > best[g].rate) best[g] = r; }
+  const parts = [];
+  let total = p.amount * base;
+  for (const r of Object.values(best)) {
+    const raw = p.amount * (r.rate || 0);
+    let got = raw, remaining = null;
+    if (r.cap) { remaining = Math.max(0, r.cap - usedFn(card, r, p.date)); got = Math.min(raw, remaining); }
+    total += got;
+    parts.push({ ruleId: r.id, label: r.label, reward: got, raw, cap: r.cap, remaining });
+  }
+  return { card, plan, base, total, value: total * (card.pointValue ?? 1), rate: p.amount ? total / p.amount : 0, parts };
+}
+
+function evalCard(card, p, usedFn) {
+  if (card.validUntil && p.date > card.validUntil) return null;
+  const plans = (card.plans || []).filter(pl => !(pl.validUntil && p.date > pl.validUntil));
+  if (!plans.length) return evalPlan(card, null, p, usedFn);
+  let bestR = null;
+  for (const plan of plans) {
+    const r = evalPlan(card, plan, p, usedFn);
+    if (!bestR || r.value > bestR.value + 1e-9 || (Math.abs(r.value - bestR.value) < 1e-9 && plan.id === card.currentPlan)) bestR = r;
+  }
+  return bestR;
+}
+const planName = (card, id) => (card.plans || []).find(p => p.id === id)?.name || id || '—';
+
+// ===================== 權益更新與到期提醒 =====================
+function pendingUpdates() {
+  return S.cards.filter(c => c.libId && libCard(c.libId) && (libCard(c.libId).updated || '') > (c.libUpdated || ''));
+}
+function expiryWarnings() {
+  const d = today(), soon = addDays(d, 14), out = [];
+  for (const c of S.cards.filter(c => c.status === 'own')) {
+    if (c.validUntil && c.validUntil <= soon)
+      out.push(c.validUntil < d ? `「${c.name}」的權益已於 ${c.validUntil} 到期，暫停計算。請更新權益（設定 → 編輯，或等卡片庫更新）。`
+        : `「${c.name}」的權益將於 ${c.validUntil} 到期，記得確認銀行的新權益。`);
+    for (const p of (c.plans || []))
+      if (p.validUntil && p.validUntil <= soon && p.validUntil >= addDays(d, -30))
+        out.push(p.validUntil < d ? `${c.bank}「${p.name}」已於 ${p.validUntil} 結束，不再列入比較。`
+          : `${c.bank}「${p.name}」將於 ${p.validUntil} 結束。`);
+  }
+  return out;
+}
+function bannersHTML() {
+  const ups = pendingUpdates().map(c => { const lc = libCard(c.libId);
+    return `<div class="banner">「${esc(c.name)}」的權益資料有更新（${esc(lc.updated)}）${lc.changelog ? `：${esc(lc.changelog)}` : ''}
+      <div class="btns"><button class="btn sm" data-act="applyLib" data-id="${c.id}">套用${c.custom ? '（會覆蓋你的修改）' : ''}</button>
+      <button class="btn sm ghost" data-act="skipLib" data-id="${c.id}">略過</button></div></div>`; });
+  return [...ups, ...expiryWarnings().map(w => `<div class="banner">${esc(w)}</div>`)].join('');
+}
+function handleBannerAct(el) {
+  const c = S.cards.find(c => c.id === el.dataset.id); if (!c) return false;
+  const lc = libCard(c.libId);
+  if (el.dataset.act === 'applyLib') {
+    const nc = fromLib(lc, c.status, c.statementDay);
+    nc.id = c.id;
+    if ((lc.plans || []).some(p => p.id === c.currentPlan)) nc.currentPlan = c.currentPlan;
+    S.cards[S.cards.indexOf(c)] = nc; toast('已套用新權益');
+  } else if (el.dataset.act === 'skipLib') { c.libUpdated = lc.updated; toast('已略過這次更新'); }
+  else return false;
+  save(); render(); return true;
+}
+
+// ===================== 畫面：第一次使用 =====================
+function renderOnboard() {
+  app.innerHTML = `<h1>先選你的卡</h1>
+    <p class="muted">從卡片庫選你有的卡；想辦但還沒辦的卡可以設成「考慮中」，App 會幫你算值不值得。之後都能在「設定」增減或修改。</p>
+    ${LIB.cards.map(c => `<div class="card"><div class="name">${esc(c.name)}</div>
+      <div class="row"><div><label class="f">要加入嗎？</label><select data-ob="${c.id}">${options([['', '不加入'], ['own', '持有'], ['candidate', '考慮中']], '')}</select></div>
+      <div><label class="f">結帳日（不知道可留 0）</label><input type="number" min="0" max="31" data-obday="${c.id}" value="0"></div></div></div>`).join('')}
+    <div class="row"><button class="btn" id="obGo">開始使用</button><button class="btn ghost" id="obBlank">卡片庫沒有我的卡，自己新增</button></div>`;
+  document.getElementById('obGo').onclick = () => {
+    S.cards = LIB.cards.filter(c => app.querySelector(`[data-ob="${c.id}"]`).value)
+      .map(c => fromLib(c, app.querySelector(`[data-ob="${c.id}"]`).value, Number(app.querySelector(`[data-obday="${c.id}"]`).value) || 0));
+    S.onboarded = true; save(); render();
+  };
+  document.getElementById('obBlank').onclick = () => { S.onboarded = true; save(); startEdit(null); };
+}
+
+// ===================== 畫面：刷哪張 =====================
+const form = { merchant: '', category: 'general', region: 'tw', pay: 'card', amount: '', date: today(), holiday: null };
+let tab = 'calc';
+
+function purchase() {
+  const date = form.date || today();
+  return { merchant: form.merchant.trim(), matched: resolveMerchant(form.merchant), category: form.category, region: form.region,
+    pay: form.pay, amount: Number(form.amount) || 0, date, holiday: form.holiday ?? isWeekend(date) };
+}
+
+function renderCalc() {
+  if (!S.onboarded) return renderOnboard();
+  const names = [...allMerchantNames().values()].sort();
+  const p = purchase();
+  app.innerHTML = `
+    <div id="banners">${bannersHTML()}</div>
+    <h1>這筆刷哪張？</h1>
+    <div class="card">
+      <label class="f">店家 / 通路（可留空，用類別判斷）</label>
+      <input id="merchant" list="mlist" placeholder="例：蝦皮、海底撈、Uber Eats" value="${esc(form.merchant)}" autocomplete="off">
+      <datalist id="mlist">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>
+      <div class="muted" id="mhit" style="margin-top:4px"></div>
+      <label class="f">類別</label>
+      <div class="chips" id="cats">${CATEGORIES.map(([id, n]) => `<button class="chip ${form.category === id ? 'on' : ''}" data-v="${id}">${n}</button>`).join('')}</div>
+      <label class="f">地區</label>
+      <div class="chips" id="regs">${REGIONS.map(([id, n]) => `<button class="chip ${form.region === id ? 'on' : ''}" data-v="${id}">${n}</button>`).join('')}</div>
+      <label class="f">付款方式</label>
+      <div class="chips" id="pays">${PAYS.map(([id, n]) => `<button class="chip ${form.pay === id ? 'on' : ''}" data-v="${id}">${n}</button>`).join('')}</div>
+      <div class="row">
+        <div><label class="f">金額（NT$）</label><input id="amount" type="number" inputmode="decimal" min="0" placeholder="1000" value="${esc(form.amount)}"></div>
+        <div><label class="f">日期</label><input id="date" type="date" value="${esc(form.date)}"></div>
+      </div>
+      <label class="check"><input type="checkbox" id="holiday" ${p.holiday ? 'checked' : ''}> 國定例假日（台新假日刷）</label>
+      <label class="check"><input type="checkbox" id="showc" ${S.showCandidates ? 'checked' : ''}> 一起比較「考慮中」的卡</label>
+    </div>
+    <div id="results"></div>`;
+  const $ = id => document.getElementById(id);
+  $('banners').onclick = e => handleBannerAct(e.target);
+  $('merchant').oninput = e => { form.merchant = e.target.value; renderResults(); };
+  $('amount').oninput = e => { form.amount = e.target.value; renderResults(); };
+  $('date').onchange = e => { form.date = e.target.value; form.holiday = null; renderCalc(); };
+  $('holiday').onchange = e => { form.holiday = e.target.checked; renderResults(); };
+  $('showc').onchange = e => { S.showCandidates = e.target.checked; save(); renderResults(); };
+  const chipGroup = (id, key) => $(id).onclick = e => { const v = e.target.dataset.v; if (!v) return; form[key] = v; renderCalc(); };
+  chipGroup('cats', 'category'); chipGroup('regs', 'region'); chipGroup('pays', 'pay');
+  renderResults();
+}
+
+function renderResults() {
+  const p = purchase();
+  const hitNames = allMerchantNames();
+  document.getElementById('mhit').textContent = p.merchant
+    ? (p.matched.length ? '對應到指定通路：' + p.matched.map(n => hitNames.get(n)).join('、') : '不在任何卡的指定通路清單 → 以類別判斷')
+    : '';
+  const box = document.getElementById('results');
+  if (!S.cards.some(c => c.status === 'own')) { box.innerHTML = `<p class="muted">還沒有持有的卡。到「設定」從卡片庫加入，或新增自己的卡。</p>`; return; }
+  if (!p.amount) { box.innerHTML = `<p class="muted">輸入金額後顯示每張卡的回饋。</p>`; return; }
+  const used = usedFromTx(S.tx);
+  const list = S.cards.filter(c => c.status === 'own' || (S.showCandidates && c.status === 'candidate'))
+    .map(c => evalCard(c, p, used)).filter(Boolean).sort((a, b) => b.value - a.value);
+  const topOwn = list.find(r => r.card.status === 'own');
+  box.innerHTML = '<h2>結果</h2>' + list.map((r, i) => {
+    const c = r.card, notes = [];
+    if (c.switchable && r.plan) {
+      if (r.plan.id !== c.currentPlan) notes.push(`需先到 App 切換到「${r.plan.name}」（目前：${planName(c, c.currentPlan)}）`);
+      const todayTx = S.tx.filter(t => t.cardId === c.id && t.date === p.date && t.planId && t.planId !== r.plan.id);
+      if (todayTx.length) notes.push(`這天已用「${planName(c, todayTx[0].planId)}」記了 ${todayTx.length} 筆；方案一天只算一個，改切會讓那些筆改用新方案計算`);
+      if (r.plan.note) notes.push(r.plan.note);
+    }
+    r.parts.filter(x => x.cap && x.reward < x.raw - 1e-9).forEach(x => notes.push(`「${x.label}」本期上限只剩 ${money(x.remaining)}`));
+    const tags = [];
+    if (r === topOwn) tags.push('<span class="tag acc">持有卡最佳</span>');
+    if (c.status === 'candidate') tags.push('<span class="tag warn">考慮中</span>');
+    if (r.plan) tags.push(`<span class="tag">${esc(r.plan.name)}</span>`);
+    const parts = [`基本 ${pct(r.base)}`, ...r.parts.map(x => `${esc(x.label)}${x.cap ? `（上限 ${x.cap}）` : ''}`)].join(' + ');
+    return `<div class="card res ${r === topOwn ? 'best' : ''} ${c.status === 'candidate' ? 'dim' : ''}">
+      <div class="main">
+        <div class="name">${esc(c.name)}</div>
+        <div>${tags.join('')}</div>
+        <div class="parts">${parts}</div>
+        ${notes.map(n => `<div class="note">${esc(n)}</div>`).join('')}
+      </div>
+      <div class="amt"><b>${money(r.value)}</b><div class="muted">${pct(r.rate)}</div>
+        ${c.status === 'own' ? `<button class="btn sm ${r === topOwn ? '' : 'ghost'}" data-log="${i}" style="margin-top:6px">我刷了這張</button>` : ''}
+      </div></div>`;
+  }).join('');
+  box.onclick = e => { const i = e.target.dataset.log; if (i == null) return; logTx(list[+i], p); };
+}
+
+function logTx(r, p) {
+  const t = { id: uid(), date: p.date, amount: p.amount, merchant: p.merchant, category: p.category, region: p.region,
+    pay: p.pay, holiday: p.holiday, cardId: r.card.id, planId: r.plan?.id || null, reward: r.value,
+    breakdown: r.parts.map(x => ({ ruleId: x.ruleId, reward: x.reward })) };
+  S.tx.push(t);
+  if (r.card.switchable && r.plan && p.date === today()) r.card.currentPlan = r.plan.id;
+  save();
+  form.merchant = ''; form.amount = '';
+  toast(`已記錄：${r.card.bank || r.card.name} ${money(r.value)}`);
+  renderCalc();
+}
+
+// ===================== 畫面：本期額度 =====================
+function renderLog() {
+  const d = today();
+  let html = '<h1>本期額度</h1>';
+  for (const c of S.cards.filter(c => c.status === 'own')) {
+    const [a, b] = periodOf('cycle', c.statementDay, d);
+    const txs = S.tx.filter(t => t.cardId === c.id && t.date >= a && t.date <= b);
+    const spent = txs.reduce((s, t) => s + t.amount, 0), rew = txs.reduce((s, t) => s + t.reward, 0);
+    const used = usedFromTx(S.tx);
+    const capped = rulesOf(c).filter(r => r.cap && !(r.validUntil && d > r.validUntil));
+    html += `<div class="card"><div class="name">${esc(c.name)}</div>
+      <div class="muted">${c.statementDay ? `帳單週期 ${a} ~ ${b}` : `本月 ${a} ~ ${b}（未設結帳日）`}</div>
+      <div style="margin-top:6px">已刷 <b>${money(spent)}</b>　回饋 <b>${money(rew)}</b>　${txs.length} 筆</div>
+      ${c.switchable ? `<div class="muted">目前方案：${esc(planName(c, c.currentPlan))}</div>` : ''}
+      ${capped.map(r => { const u = used(c, r, d), w = Math.min(100, u / r.cap * 100);
+        const [, pb] = periodOf(r.capPeriod || 'cycle', c.statementDay, d);
+        return `<div style="margin-top:8px;font-size:13px">${esc(r.label)}：${money(u)} / ${money(r.cap)}${r.capPeriod === 'quarter' ? `（本季至 ${pb}）` : ''}
+          <div class="bar"><i style="width:${w}%"></i></div></div>`; }).join('')}
+      ${!capped.length ? '<div class="muted" style="margin-top:4px">此卡目前沒有回饋上限規則</div>' : ''}
+    </div>`;
+  }
+  const recent = [...S.tx].sort((x, y) => y.date.localeCompare(x.date) || y.id.localeCompare(x.id)).slice(0, 60);
+  html += `<h2>消費紀錄</h2><div class="card">${recent.length ? recent.map(t => {
+    const c = S.cards.find(c => c.id === t.cardId);
+    return `<div class="tx"><div><div>${esc(t.merchant || catName(t.category))} <span class="muted">${money(t.amount)}</span></div>
+      <div class="muted">${t.date}・${esc(c?.bank || c?.name || '已刪除的卡')}${t.planId ? '・' + esc(planName(c || {}, t.planId)) : ''}${t.region !== 'tw' ? '・' + regName(t.region) : ''}</div></div>
+      <div style="display:flex;align-items:center;gap:6px"><span>${money(t.reward)}</span><button class="x" data-del="${t.id}" title="刪除">×</button></div></div>`;
+  }).join('') : '<p class="muted">還沒有紀錄。在「刷哪張」頁按「我刷了這張」就會記一筆。</p>'}</div>`;
+  app.innerHTML = html;
+  app.onclick = e => {
+    const id = e.target.dataset.del; if (!id || !confirmTap(e.target, '刪除?')) return;
+    S.tx = S.tx.filter(t => t.id !== id); save(); renderLog();
+  };
+}
+
+// ===================== 畫面：分析（考慮中的卡值不值得辦） =====================
+function simulate(cards, txs) {
+  const sim = []; let total = 0; const byCard = {};
+  for (const t of txs) {
+    const p = { ...t, matched: resolveMerchant(t.merchant) };
+    const used = usedFromTx(sim);
+    let best = null;
+    for (const c of cards) { const r = evalCard(c, p, used); if (r && (!best || r.value > best.value)) best = r; }
+    if (!best) continue;
+    sim.push({ ...t, cardId: best.card.id, breakdown: best.parts.map(x => ({ ruleId: x.ruleId, reward: x.reward })) });
+    total += best.value; byCard[best.card.id] = (byCard[best.card.id] || 0) + best.value;
+  }
+  return { total, byCard };
+}
+
+let analysisDays = 90;
+function renderAnalysis() {
+  const from = addDays(today(), -analysisDays);
+  const txs = S.tx.filter(t => t.date >= from).sort((a, b) => a.date.localeCompare(b.date));
+  const own = S.cards.filter(c => c.status === 'own'), cands = S.cards.filter(c => c.status === 'candidate');
+  let html = `<h1>分析</h1>
+    <div class="chips" id="days">${[30, 90, 180, 365].map(d => `<button class="chip ${analysisDays === d ? 'on' : ''}" data-v="${d}">近 ${d} 天</button>`).join('')}</div>`;
+  if (!txs.length) { app.innerHTML = html + '<p class="muted">這段期間沒有消費紀錄。記錄一陣子之後，這裡會用你真實的消費習慣算出「考慮中的卡」一年能多拿多少。</p>'; bindDays(); return; }
+  const spent = txs.reduce((s, t) => s + t.amount, 0), actual = txs.reduce((s, t) => s + t.reward, 0);
+  const span = Math.max(1, (parseD(txs[txs.length - 1].date) - parseD(txs[0].date)) / 864e5 + 1);
+  const yr = v => v * 365 / Math.max(span, 30);
+  const baseSim = simulate(own, txs);
+  html += `<div class="card"><table>
+    <tr><td>期間消費</td><td class="n">${money(spent)}（${txs.length} 筆）</td></tr>
+    <tr><td>實際拿到</td><td class="n">${money(actual)}（${pct(actual / spent)}）</td></tr>
+    <tr><td>現有卡每筆都刷對</td><td class="n">${money(baseSim.total)}（${pct(baseSim.total / spent)}）</td></tr>
+  </table><div class="muted" style="margin-top:6px">模擬時會依序扣除各卡上限；可切換方案的卡以「每筆都切到最佳方案」計算（實際上一天只能一個方案，會略高估）。</div></div>
+  <h2>如果多辦一張…</h2>`;
+  if (!cands.length) html += '<p class="muted">到「設定」把卡片狀態改成「考慮中」，就能在這裡比較。</p>';
+  for (const c of cands) {
+    const s = simulate([...own, c], txs), delta = s.total - baseSim.total;
+    html += `<div class="card"><div class="name">${esc(c.name)}</div>
+      <div style="margin-top:4px">期間多拿 <b>${money(delta)}</b>　推估一年 <b>${money(yr(delta))}</b></div>
+      <div class="muted">這張卡會接手 ${money(s.byCard[c.id] || 0)} 的回饋；${esc(c.notes || '')}</div></div>`;
+  }
+  const byCat = {};
+  for (const t of txs) byCat[t.category] = (byCat[t.category] || 0) + t.amount;
+  const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+  html += `<h2>錢花在哪</h2><div class="card">${cats.map(([k, v]) => `<div style="font-size:13px;margin-bottom:6px">${catName(k)}　${money(v)}（${pct(v / spent)}）
+    <div class="bar"><i style="width:${v / cats[0][1] * 100}%"></i></div></div>`).join('')}</div>`;
+  app.innerHTML = html; bindDays();
+}
+function bindDays() { document.getElementById('days').onclick = e => { const v = e.target.dataset.v; if (!v) return; analysisDays = +v; renderAnalysis(); }; }
+
+// ===================== 畫面：設定 =====================
+let showLib = false;
+function renderSettings() {
+  const inLib = new Set(S.cards.map(c => c.libId).filter(Boolean));
+  const addable = LIB.cards.filter(c => !inLib.has(c.id));
+  let html = `<div id="banners">${bannersHTML()}</div><h1>設定</h1><h2>我的卡</h2>`;
+  if (!S.cards.length) html += '<p class="muted">還沒有卡片。</p>';
+  for (const c of S.cards) {
+    const src = !c.libId ? '<span class="tag">自訂</span>' : c.custom ? '<span class="tag warn">卡片庫・已修改</span>' : '<span class="tag acc">卡片庫</span>';
+    html += `<div class="card"><div class="name">${esc(c.name)}</div><div>${src}${c.validUntil ? `<span class="tag">權益至 ${c.validUntil}</span>` : ''}</div>
+      <div class="row" style="margin-top:4px">
+        <div><label class="f">狀態</label><select data-sk="status" data-id="${c.id}">${options(STATUSES, c.status)}</select></div>
+        <div><label class="f">結帳日（0 = 自然月）</label><input type="number" min="0" max="31" data-sk="statementDay" data-id="${c.id}" value="${c.statementDay || 0}"></div>
+      </div>
+      ${c.switchable && c.plans?.length ? `<label class="f">目前切換方案</label><select data-sk="currentPlan" data-id="${c.id}">${options(c.plans.map(p => [p.id, p.name]), c.currentPlan)}</select>` : ''}
+      ${c.notes ? `<div class="muted" style="margin-top:8px">${esc(c.notes)}</div>` : ''}
+      ${(c.sources || []).map(u => `<div class="muted"><a href="${esc(u)}" target="_blank" rel="noopener" style="color:var(--accent)">資料來源</a></div>`).join('')}
+      <div class="row" style="margin-top:10px"><button class="btn ghost sm" data-edit="${c.id}">編輯權益</button><button class="btn danger sm" data-delcard="${c.id}">刪除這張卡</button></div>
+    </div>`;
+  }
+  html += `<div class="row"><button class="btn ghost" id="addLib">從卡片庫加入${addable.length ? `（${addable.length}）` : ''}</button><button class="btn ghost" id="addBlank">新增自訂卡片</button></div>
+    ${showLib ? `<div style="margin-top:10px">${addable.length ? addable.map(c => `<div class="card"><div class="name">${esc(c.name)}</div>
+      <div class="muted">${esc(c.notes || '')}</div>
+      <div class="row" style="margin-top:8px"><button class="btn sm" data-addlib="${c.id}" data-st="own">加入（持有）</button><button class="btn ghost sm" data-addlib="${c.id}" data-st="candidate">加入（考慮中）</button></div></div>`).join('')
+      : '<p class="muted">卡片庫的卡都已經加入了。</p>'}</div>` : ''}
+    <h2>分享與備份</h2>
+    <div class="card"><div class="muted">資料只存在這台裝置的瀏覽器。換手機或清除瀏覽資料前，先匯出完整備份。<br>「匯出卡片設定」只含卡片權益（不含消費紀錄），可以傳給朋友匯入。</div>
+    <div class="row" style="margin-top:8px"><button class="btn ghost sm" id="exp">匯出完整備份</button><button class="btn ghost sm" id="expCards">匯出卡片設定</button><button class="btn ghost sm" id="imp">匯入檔案</button></div>
+    <input type="file" id="file" accept="application/json,.json" style="display:none"></div>
+    <h2>權益更新怎麼運作</h2>
+    <div class="card muted">來自卡片庫的卡：卡片庫更新後，打開 App 會出現「權益資料有更新」，按套用即可（保留結帳日、目前方案與消費紀錄）。卡片庫版本：${esc(LIB.updated || '—')}。<br>
+    權益到期前 14 天會提醒你。臨時活動或卡片庫沒有的卡，可以用「編輯權益」自己改。</div>
+    <h2>外觀</h2>
+    <div class="chips" id="theme">${[['', '跟隨系統'], ['light', '淺色'], ['dark', '深色']].map(([v, n]) => `<button class="chip ${(S.theme || '') === v ? 'on' : ''}" data-v="${v}">${n}</button>`).join('')}</div>`;
+  app.innerHTML = html;
+  app.onchange = e => {
+    const { sk, id } = e.target.dataset; if (!sk) return;
+    const c = S.cards.find(c => c.id === id); c[sk] = sk === 'statementDay' ? Number(e.target.value) || 0 : e.target.value;
+    save(); toast('已儲存');
+  };
+  app.onclick = e => {
+    const el = e.target, ds = el.dataset;
+    if (handleBannerAct(el)) return;
+    if (ds.edit) return startEdit(ds.edit);
+    if (ds.delcard) { if (!confirmTap(el, '確定刪除？（消費紀錄會保留）')) return; S.cards = S.cards.filter(c => c.id !== ds.delcard); save(); renderSettings(); return; }
+    if (ds.addlib) { S.cards.push(fromLib(libCard(ds.addlib), ds.st)); save(); toast('已加入，記得設定結帳日'); renderSettings(); return; }
+    if (el.id === 'addLib') { showLib = !showLib; renderSettings(); return; }
+    if (el.id === 'addBlank') return startEdit(null);
+    if (el.id === 'exp') return download(`cardswitch-backup-${today()}.json`, S);
+    if (el.id === 'expCards') return download(`cardswitch-cards-${today()}.json`, { kind: 'cards', exported: today(),
+      cards: S.cards.map(c => { const o = clone(c); delete o.status; delete o.statementDay; delete o.currentPlan; return o; }) });
+    if (el.id === 'imp') return document.getElementById('file').click();
+    if (el.closest('#theme') && ds.v != null) { S.theme = ds.v; save(); applyTheme(); renderSettings(); }
+  };
+  document.getElementById('file').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const v = JSON.parse(await f.text());
+      if (v.kind === 'cards' && Array.isArray(v.cards)) {
+        for (const nc of v.cards) {
+          const old = S.cards.find(c => c.id === nc.id);
+          const card = { ...nc, status: old?.status || 'own', statementDay: old?.statementDay || 0, currentPlan: old?.currentPlan || nc.defaultPlan || nc.plans?.[0]?.id };
+          if (old) S.cards[S.cards.indexOf(old)] = card; else S.cards.push(card);
+        }
+        S.onboarded = true; save(); toast(`已匯入 ${v.cards.length} 張卡`);
+      } else if (Array.isArray(v.cards)) {
+        if (!confirm('這是完整備份，會取代目前所有卡片與消費紀錄。確定匯入？')) return;
+        S = v; migrate(); save(); applyTheme(); toast('已匯入備份');
+      } else throw 0;
+      renderSettings();
+    } catch (err) { toast('檔案格式不對'); }
+    e.target.value = '';
+  };
+}
+function download(name, obj) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' }));
+  a.download = name; a.click();
+}
+
+// ===================== 畫面：卡片編輯器 =====================
+let draft = null, draftIsNew = false;
+function startEdit(id) {
+  const c = S.cards.find(c => c.id === id);
+  draft = c ? clone(c) : { id: 'c-' + uid(), name: '', bank: '', status: 'own', statementDay: 0, pointName: '現金回饋', pointValue: 1,
+    base: { tw: 0.01, overseas: 0.01 }, rules: [], libId: null, custom: true };
+  draftIsNew = !c; tab = 'edit'; render();
+}
+const blankRule = () => ({ id: 'r-' + uid(), label: '', rate: 0.01 });
+const pctVal = r => r == null ? '' : +(r * 100).toFixed(4);
+function getRef(path) {
+  const keys = path.split('.'); let o = draft;
+  for (const k of keys.slice(0, -1)) o = o[k];
+  return [o, keys[keys.length - 1]];
+}
+const chipsT = (path, list, sel) => `<div class="chips">${list.map(([id, n]) =>
+  `<button class="chip ${(sel || []).includes(id) ? 'on' : ''}" data-tg="${path}" data-v="${id}">${n}</button>`).join('')}</div>`;
+
+function ruleHTML(r, path) {
+  return `<div class="rule">
+    <div class="row"><div style="flex:2"><label class="f">規則名稱</label><input data-p="${path}.label" value="${esc(r.label)}" placeholder="例：網購 3%"></div>
+      <div><label class="f">加碼 %</label><input type="number" step="0.1" inputmode="decimal" data-p="${path}.rate" data-k="pct" value="${pctVal(r.rate)}"></div></div>
+    <label class="f">指定店家（逗號或換行分隔）</label>
+    <textarea class="sm" data-p="${path}.merchants" data-k="list" placeholder="例：蝦皮, momo, PChome">${esc((r.merchants || []).join(', '))}</textarea>
+    <label class="f">指定類別</label>${chipsT(path + '.categories', CATEGORIES, r.categories)}
+    <div class="muted" style="margin-top:4px">店家或類別符合任一即可；兩者都不填 = 所有消費都算。</div>
+    <label class="f">限定地區（不選 = 不限）</label>${chipsT(path + '.regions', REGIONS, r.regions)}
+    <label class="f">限定付款方式（不選 = 不限）</label>${chipsT(path + '.pay', PAYS, r.pay)}
+    <div class="row">
+      <div><label class="f">回饋上限（元）</label><input type="number" min="0" data-p="${path}.cap" data-k="num" value="${r.cap ?? ''}" placeholder="無上限"></div>
+      <div><label class="f">上限週期</label><select data-p="${path}.capPeriod">${options([['cycle', '帳單週期'], ['month', '自然月'], ['quarter', '每季']], r.capPeriod || 'cycle')}</select></div>
+    </div>
+    <div class="row">
+      <div><label class="f">單筆最低金額</label><input type="number" min="0" data-p="${path}.minSingle" data-k="num" value="${r.minSingle ?? ''}" placeholder="不限"></div>
+      <div><label class="f">規則有效至</label><input type="date" data-p="${path}.validUntil" value="${esc(r.validUntil || '')}"></div>
+    </div>
+    <label class="check"><input type="checkbox" data-p="${path}.holiday" data-k="bool" ${r.holiday ? 'checked' : ''}> 只限國定例假日</label>
+    <details style="margin-top:8px"><summary>疊加群組（進階）</summary>
+      <div class="muted">同一方案中，群組相同的規則只取回饋最高的一條；不同群組會疊加。不懂就不用改。</div>
+      <input data-p="${path}.group" value="${esc(r.group || '')}" placeholder="main"></details>
+    <div style="margin-top:10px"><button class="btn danger sm" data-act="del" data-path="${path}">刪除這條規則</button></div>
+  </div>`;
+}
+
+function renderEditor() {
+  const d = draft;
+  if (d.switchable && !d.plans?.length) d.plans = [{ id: 'p-' + uid(), name: '方案一', rules: [] }];
+  if (d.switchable && !d.plans.some(p => p.id === d.currentPlan)) d.currentPlan = d.plans[0].id;
+  const b = d.base || (d.base = {});
+  app.innerHTML = `<h1>${draftIsNew ? '新增卡片' : '編輯權益'}</h1>
+    ${d.libId ? '<p class="muted">這張卡來自卡片庫。修改後，卡片庫若有新版會提醒你，套用時會覆蓋你的修改。</p>' : ''}
+    <div class="card">
+      <div class="row"><div style="flex:2"><label class="f">卡名</label><input data-p="name" value="${esc(d.name)}" placeholder="例：永豐 DAWHO 大戶卡"></div>
+        <div><label class="f">銀行</label><input data-p="bank" value="${esc(d.bank)}" placeholder="永豐"></div></div>
+      <div class="row"><div><label class="f">狀態</label><select data-p="status">${options(STATUSES, d.status)}</select></div>
+        <div><label class="f">結帳日（0 = 自然月）</label><input type="number" min="0" max="31" data-p="statementDay" data-k="num" value="${d.statementDay || 0}"></div></div>
+      <div class="row"><div><label class="f">國內基本回饋 %</label><input type="number" step="0.1" data-p="base.tw" data-k="pct" value="${pctVal(b.tw)}"></div>
+        <div><label class="f">海外基本回饋 %</label><input type="number" step="0.1" data-p="base.overseas" data-k="pct" value="${pctVal(b.overseas)}"></div></div>
+      <div class="row">${[['jp', '日本'], ['kr', '韓國'], ['th', '泰國']].map(([k, n]) =>
+        `<div><label class="f">${n} %</label><input type="number" step="0.1" data-p="base.${k}" data-k="pct" value="${pctVal(b[k])}" placeholder="同海外"></div>`).join('')}</div>
+      <div class="row"><div><label class="f">回饋單位</label><input data-p="pointName" value="${esc(d.pointName || '')}" placeholder="現金回饋"></div>
+        <div><label class="f">1 點值多少元</label><input type="number" step="0.01" data-p="pointValue" data-k="num" value="${d.pointValue ?? 1}"></div></div>
+      <label class="f">權益有效至（到期前 14 天會提醒）</label><input type="date" data-p="validUntil" value="${esc(d.validUntil || '')}">
+      <label class="f">備註（達標條件等）</label><textarea class="sm" data-p="notes">${esc(d.notes || '')}</textarea>
+      <label class="check"><input type="checkbox" data-p="switchable" data-k="bool" data-rerender="1" ${d.switchable ? 'checked' : ''}> 這張卡要切換方案（像台新切換刷，一次只能用一個方案）</label>
+    </div>
+    <h2>${d.switchable ? '所有方案都適用的加碼' : '加碼回饋規則'}</h2>
+    <p class="muted">每條規則是疊加在基本回饋上的加碼。例：基本 1%、規則加碼 2%，該通路就是 3%。</p>
+    ${(d.rules || []).map((r, i) => ruleHTML(r, `rules.${i}`)).join('')}
+    <button class="btn ghost sm" data-act="addRule" data-path="rules">＋ 新增規則</button>
+    ${d.switchable ? `<h2>切換方案</h2>${d.plans.map((p, pi) => `<div class="card plan">
+      <div class="row"><div style="flex:2"><label class="f">方案名稱</label><input data-p="plans.${pi}.name" value="${esc(p.name)}"></div>
+        <div><label class="f">方案有效至</label><input type="date" data-p="plans.${pi}.validUntil" value="${esc(p.validUntil || '')}"></div></div>
+      <div style="margin-top:10px">${p.rules.map((r, i) => ruleHTML(r, `plans.${pi}.rules.${i}`)).join('')}</div>
+      <div class="row"><button class="btn ghost sm" data-act="addRule" data-path="plans.${pi}.rules">＋ 新增規則</button>
+        <button class="btn danger sm" data-act="del" data-path="plans.${pi}">刪除這個方案</button></div></div>`).join('')}
+      <button class="btn ghost sm" data-act="addPlan">＋ 新增方案</button>` : ''}
+    <details style="margin-top:20px"><summary>進階：直接編輯 JSON（可貼上 AI 幫你整理的權益）</summary>
+      <textarea id="ejson">${esc(JSON.stringify(d, null, 2))}</textarea>
+      <button class="btn ghost sm" data-act="applyJson" style="margin-top:6px">套用 JSON</button></details>
+    <div class="actions"><button class="btn" data-act="save">儲存</button><button class="btn ghost" data-act="cancel">取消</button></div>`;
+}
+
+function editorInput(e) {
+  const el = e.target, path = el.dataset.p; if (!path || !draft) return;
+  const [o, k] = getRef(path), kind = el.dataset.k;
+  let v = el.value;
+  if (kind === 'pct') v = v === '' ? null : +(parseFloat(v) / 100).toFixed(6);
+  else if (kind === 'num') v = v === '' ? null : Number(v);
+  else if (kind === 'list') { v = v.split(/[,，、\n]/).map(s => s.trim()).filter(Boolean); if (!v.length) v = null; }
+  else if (kind === 'bool') v = el.checked || null;
+  else if (v === '') v = null;
+  if (v === null || (typeof v === 'number' && isNaN(v))) delete o[k]; else o[k] = v;
+  if (el.dataset.rerender) renderEditor();
+}
+function editorClick(e) {
+  const el = e.target, ds = el.dataset;
+  if (ds.tg) {
+    const [o, k] = getRef(ds.tg), set = new Set(o[k] || []);
+    set.has(ds.v) ? set.delete(ds.v) : set.add(ds.v);
+    if (set.size) o[k] = [...set]; else delete o[k];
+    return renderEditor();
+  }
+  switch (ds.act) {
+    case 'addRule': { const [o, k] = getRef(ds.path); (o[k] = o[k] || []).push(blankRule()); return renderEditor(); }
+    case 'addPlan': draft.plans.push({ id: 'p-' + uid(), name: '新方案', rules: [] }); return renderEditor();
+    case 'del': { if (!confirmTap(el)) return; const [o, k] = getRef(ds.path); o.splice(+k, 1); return renderEditor(); }
+    case 'applyJson':
+      try { const v = JSON.parse(document.getElementById('ejson').value); if (typeof v !== 'object' || Array.isArray(v)) throw 0; draft = { ...v, id: draft.id }; renderEditor(); toast('已套用，記得按儲存'); }
+      catch (err) { toast('JSON 格式錯誤'); }
+      return;
+    case 'cancel': draft = null; tab = 'settings'; return render();
+    case 'save': return saveDraft();
+  }
+}
+function saveDraft() {
+  const d = draft;
+  if (!d.name || !d.name.trim()) return toast('請輸入卡名');
+  d.base = d.base || {};
+  if (d.base.tw == null) d.base.tw = 0;
+  if (d.base.overseas == null) d.base.overseas = d.base.tw;
+  if (!d.switchable) { delete d.plans; delete d.currentPlan; delete d.defaultPlan; }
+  for (const r of rulesOf(d)) { if (r.rate == null) r.rate = 0; if (!r.label) r.label = '加碼 ' + pct(r.rate); if (!r.id) r.id = 'r-' + uid(); }
+  if (!draftIsNew && d.libId) d.custom = true;
+  const i = S.cards.findIndex(c => c.id === d.id);
+  if (i >= 0) S.cards[i] = d; else S.cards.push(d);
+  S.onboarded = true; save(); draft = null; tab = 'settings'; toast('已儲存'); render();
+}
+
+// ===================== 啟動 =====================
+const app = document.getElementById('app');
+function applyTheme() { if (S.theme) document.documentElement.dataset.theme = S.theme; else delete document.documentElement.dataset.theme; }
+function render() {
+  app.onclick = null; app.onchange = null; app.oninput = null;
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  if (tab === 'edit') { app.oninput = editorInput; app.onchange = editorInput; app.onclick = editorClick; renderEditor(); }
+  else ({ calc: renderCalc, log: renderLog, analysis: renderAnalysis, settings: renderSettings })[tab]();
+  window.scrollTo(0, 0);
+}
+document.getElementById('nav').onclick = e => { const t = e.target.dataset.tab; if (t) { draft = null; tab = t; render(); } };
+load(); applyTheme(); render();
+</script>
+</body>
+</html>
