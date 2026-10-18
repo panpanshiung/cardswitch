@@ -53,7 +53,6 @@ button.btn.sm { padding: 4px 10px; font-size: 13px; }
 .res .main { flex: 1; min-width: 0; }
 .res .amt { text-align: right; white-space: nowrap; }
 .res .amt b { font-size: 20px; }
-.res.best { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .res.dim { opacity: .72; }
 .name { font-weight: 600; }
 .muted { color: var(--muted); font-size: 13px; }
@@ -108,6 +107,7 @@ const CATEGORIES = [
 ];
 const REGIONS = [['tw','國內'],['jp','日本'],['kr','韓國'],['th','泰國'],['os','其他海外']];
 const PAYS = [['card','實體卡/線上刷卡'],['tspay','台新Pay'],['linepay','LINE Pay'],['nfc','Apple/Google Pay'],['icash','全盈+Pay']];
+const CHANNELS = [['store','實體店面'],['online','線上']];
 const STATUSES = [['own','持有'],['candidate','考慮中'],['off','停用']];
 
 // ===================== 狀態 =====================
@@ -196,6 +196,7 @@ function ruleMatches(rule, p) {
   if (rule.pay && !rule.pay.includes(p.pay)) return false;
   if (rule.holiday && !p.holiday) return false;
   if (rule.minSingle && p.amount < rule.minSingle) return false;
+  if (rule.channel && (p.channel || 'store') !== rule.channel) return false;
   if (!rule.merchants && !rule.categories) return true;
   if (rule.categories && rule.categories.includes(p.category)) return true;
   if (rule.merchants && rule.merchants.some(m => p.matched.includes(norm(m)))) return true;
@@ -243,6 +244,23 @@ function evalCard(card, p, usedFn) {
   return bestR;
 }
 const planName = (card, id) => (card.plans || []).find(p => p.id === id)?.name || id || '—';
+
+// 某類別下有加碼的指定店家（來自規則的 hint），依回饋率排序
+function suggestions(cat) {
+  if (!cat || cat === 'general') return [];
+  const d = form.date || today(), out = new Map();
+  for (const c of S.cards.filter(c => c.status === 'own' || (S.showCandidates && c.status === 'candidate'))) {
+    if (c.validUntil && d > c.validUntil) continue;
+    const rules = [...(c.rules || [])];
+    for (const p of (c.plans || [])) if (!(p.validUntil && d > p.validUntil)) rules.push(...p.rules);
+    for (const r of rules) {
+      if (!(r.hint || []).includes(cat) || (r.validUntil && d > r.validUntil)) continue;
+      const rate = (c.base?.tw || 0) + (r.rate || 0);
+      for (const m of (r.merchants || [])) { const k = norm(m), prev = out.get(k); if (!prev || rate > prev.rate) out.set(k, { name: m, rate }); }
+    }
+  }
+  return [...out.values()].sort((a, b) => b.rate - a.rate);
+}
 
 // ===================== 權益更新與到期提醒 =====================
 function pendingUpdates() {
@@ -298,19 +316,20 @@ function renderOnboard() {
 }
 
 // ===================== 畫面：刷哪張 =====================
-const form = { merchant: '', category: 'general', region: 'tw', pay: 'card', amount: '', date: today(), holiday: null };
+const form = { merchant: '', category: 'general', region: 'tw', channel: 'store', pay: 'card', amount: '', date: today(), holiday: null };
 let tab = 'calc';
 
 function purchase() {
   const date = form.date || today();
   return { merchant: form.merchant.trim(), matched: resolveMerchant(form.merchant), category: form.category, region: form.region,
-    pay: form.pay, amount: Number(form.amount) || 0, date, holiday: form.holiday ?? isWeekend(date) };
+    channel: form.region === 'tw' ? null : form.channel, pay: form.pay, amount: Number(form.amount) || 0, date, holiday: form.holiday ?? isWeekend(date) };
 }
 
 function renderCalc() {
   if (!S.onboarded) return renderOnboard();
   const names = [...allMerchantNames().values()].sort();
   const p = purchase();
+  const sugg = suggestions(form.category);
   app.innerHTML = `
     <div id="banners">${bannersHTML()}</div>
     <h1>這筆刷哪張？</h1>
@@ -321,8 +340,12 @@ function renderCalc() {
       <div class="muted" id="mhit" style="margin-top:4px"></div>
       <label class="f">類別</label>
       <div class="chips" id="cats">${CATEGORIES.map(([id, n]) => `<button class="chip ${form.category === id ? 'on' : ''}" data-v="${id}">${n}</button>`).join('')}</div>
-      <label class="f">地區</label>
+      ${sugg.length ? `<label class="f">這個類別有加碼的店家（點一下填入）</label>
+      <div class="chips" id="sugg">${sugg.map(x => `<button class="chip ${norm(form.merchant) === norm(x.name) ? 'on' : ''}" data-v="${esc(x.name)}">${esc(x.name)} <span class="muted">${pct(x.rate)}</span></button>`).join('')}</div>` : ''}
+      <label class="f">地區（刷外幣或海外商店就選海外，跟人在哪無關）</label>
       <div class="chips" id="regs">${REGIONS.map(([id, n]) => `<button class="chip ${form.region === id ? 'on' : ''}" data-v="${id}">${n}</button>`).join('')}</div>
+      ${form.region !== 'tw' ? `<label class="f">海外消費方式</label>
+      <div class="chips" id="chans">${CHANNELS.map(([id, n]) => `<button class="chip ${form.channel === id ? 'on' : ''}" data-v="${id}">${n}</button>`).join('')}</div>` : ''}
       <label class="f">付款方式</label>
       <div class="chips" id="pays">${PAYS.map(([id, n]) => `<button class="chip ${form.pay === id ? 'on' : ''}" data-v="${id}">${n}</button>`).join('')}</div>
       <div class="row">
@@ -340,8 +363,10 @@ function renderCalc() {
   $('date').onchange = e => { form.date = e.target.value; form.holiday = null; renderCalc(); };
   $('holiday').onchange = e => { form.holiday = e.target.checked; renderResults(); };
   $('showc').onchange = e => { S.showCandidates = e.target.checked; save(); renderResults(); };
-  const chipGroup = (id, key) => $(id).onclick = e => { const v = e.target.dataset.v; if (!v) return; form[key] = v; renderCalc(); };
+  const chipGroup = (id, key) => $(id).onclick = e => { const v = e.target.closest('[data-v]')?.dataset.v; if (!v) return; form[key] = v; renderCalc(); };
   chipGroup('cats', 'category'); chipGroup('regs', 'region'); chipGroup('pays', 'pay');
+  if ($('chans')) chipGroup('chans', 'channel');
+  if ($('sugg')) chipGroup('sugg', 'merchant');
   renderResults();
 }
 
@@ -357,7 +382,6 @@ function renderResults() {
   const used = usedFromTx(S.tx);
   const list = S.cards.filter(c => c.status === 'own' || (S.showCandidates && c.status === 'candidate'))
     .map(c => evalCard(c, p, used)).filter(Boolean).sort((a, b) => b.value - a.value);
-  const topOwn = list.find(r => r.card.status === 'own');
   box.innerHTML = '<h2>結果</h2>' + list.map((r, i) => {
     const c = r.card, notes = [];
     if (c.switchable && r.plan) {
@@ -368,11 +392,10 @@ function renderResults() {
     }
     r.parts.filter(x => x.cap && x.reward < x.raw - 1e-9).forEach(x => notes.push(`「${x.label}」本期上限只剩 ${money(x.remaining)}`));
     const tags = [];
-    if (r === topOwn) tags.push('<span class="tag acc">持有卡最佳</span>');
     if (c.status === 'candidate') tags.push('<span class="tag warn">考慮中</span>');
     if (r.plan) tags.push(`<span class="tag">${esc(r.plan.name)}</span>`);
     const parts = [`基本 ${pct(r.base)}`, ...r.parts.map(x => `${esc(x.label)}${x.cap ? `（上限 ${x.cap}）` : ''}`)].join(' + ');
-    return `<div class="card res ${r === topOwn ? 'best' : ''} ${c.status === 'candidate' ? 'dim' : ''}">
+    return `<div class="card res ${c.status === 'candidate' ? 'dim' : ''}">
       <div class="main">
         <div class="name">${esc(c.name)}</div>
         <div>${tags.join('')}</div>
@@ -380,7 +403,7 @@ function renderResults() {
         ${notes.map(n => `<div class="note">${esc(n)}</div>`).join('')}
       </div>
       <div class="amt"><b>${money(r.value)}</b><div class="muted">${pct(r.rate)}</div>
-        ${c.status === 'own' ? `<button class="btn sm ${r === topOwn ? '' : 'ghost'}" data-log="${i}" style="margin-top:6px">我刷了這張</button>` : ''}
+        ${c.status === 'own' ? `<button class="btn sm ghost" data-log="${i}" style="margin-top:6px">我刷了這張</button>` : ''}
       </div></div>`;
   }).join('');
   box.onclick = e => { const i = e.target.dataset.log; if (i == null) return; logTx(list[+i], p); };
@@ -388,7 +411,7 @@ function renderResults() {
 
 function logTx(r, p) {
   const t = { id: uid(), date: p.date, amount: p.amount, merchant: p.merchant, category: p.category, region: p.region,
-    pay: p.pay, holiday: p.holiday, cardId: r.card.id, planId: r.plan?.id || null, reward: r.value,
+    channel: p.channel, pay: p.pay, holiday: p.holiday, cardId: r.card.id, planId: r.plan?.id || null, reward: r.value,
     breakdown: r.parts.map(x => ({ ruleId: x.ruleId, reward: x.reward })) };
   S.tx.push(t);
   if (r.card.switchable && r.plan && p.date === today()) r.card.currentPlan = r.plan.id;
@@ -590,6 +613,8 @@ function ruleHTML(r, path) {
     <div class="muted" style="margin-top:4px">店家或類別符合任一即可；兩者都不填 = 所有消費都算。</div>
     <label class="f">限定地區（不選 = 不限）</label>${chipsT(path + '.regions', REGIONS, r.regions)}
     <label class="f">限定付款方式（不選 = 不限）</label>${chipsT(path + '.pay', PAYS, r.pay)}
+    <label class="f">限定海外消費方式</label><select data-p="${path}.channel">${options([['', '不限'], ...CHANNELS], r.channel || '')}</select>
+    <label class="f">在「刷哪張」選這些類別時，推薦上面的店家</label>${chipsT(path + '.hint', CATEGORIES.filter(c => c[0] !== 'general'), r.hint)}
     <div class="row">
       <div><label class="f">回饋上限（元）</label><input type="number" min="0" data-p="${path}.cap" data-k="num" value="${r.cap ?? ''}" placeholder="無上限"></div>
       <div><label class="f">上限週期</label><select data-p="${path}.capPeriod">${options([['cycle', '帳單週期'], ['month', '自然月'], ['quarter', '每季']], r.capPeriod || 'cycle')}</select></div>
